@@ -463,11 +463,17 @@ shap_time = time.time() - t0
 print(f"SHAP computation completed in {shap_time:.1f}s")
 
 # Feature importance from SHAP (mean |SHAP| across all classes)
-if isinstance(shap_values, list):
-    # Multi-class: average across classes
+shap_arr = np.array(shap_values)
+if shap_arr.ndim == 3:
+    # Multi-class: shape (n_classes, n_samples, n_features) or (n_samples, n_features, n_classes)
+    # Average across classes and samples to get per-feature importance
+    mean_shap = np.abs(shap_arr).mean(axis=(0, 1)) if shap_arr.shape[0] < shap_arr.shape[1] else np.abs(shap_arr).mean(axis=0).mean(axis=-1)
+elif isinstance(shap_values, list):
     mean_shap = np.mean([np.abs(sv).mean(axis=0) for sv in shap_values], axis=0)
 else:
-    mean_shap = np.abs(shap_values).mean(axis=0)
+    mean_shap = np.abs(shap_arr).mean(axis=0)
+# Ensure mean_shap is 1D (one value per feature)
+mean_shap = np.array(mean_shap).flatten()[:len(FEATURE_NAMES)]
 
 print(f"\n--- SHAP Feature Importance (top 10) ---")
 shap_importance = sorted(zip(FEATURE_NAMES, mean_shap), key=lambda x: -x[1])

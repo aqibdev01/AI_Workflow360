@@ -90,7 +90,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 if device == "cuda":
     print(f"GPU: {torch.cuda.get_device_name(0)}")
-    print(f"Memory: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB")
+    print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
 
 # ============================================================================
@@ -824,11 +824,13 @@ def compute_metrics(eval_preds):
     """Compute ROUGE scores for evaluation."""
     preds, labels = eval_preds
 
-    # Decode predictions
-    decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
-
     # Replace -100 in labels with pad token for decoding
     labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+
+    # Clip predictions to valid token range to prevent OverflowError
+    preds = np.clip(preds, 0, tokenizer.vocab_size - 1)
+
+    decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
     decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
     # Strip whitespace
@@ -897,7 +899,7 @@ trainer = Seq2SeqTrainer(
     args=training_args,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
-    tokenizer=tokenizer,
+    processing_class=tokenizer,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
     callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
@@ -916,9 +918,9 @@ print(f"\nStarting training...")
 train_result = trainer.train()
 
 print(f"\n--- Training Complete ---")
-print(f"  Total steps: {train_result.metrics['train_steps']}")
-print(f"  Training loss: {train_result.metrics['train_loss']:.4f}")
+print(f"  Training loss: {train_result.metrics.get('train_loss', 'N/A')}")
 print(f"  Training time: {train_result.metrics.get('train_runtime', 0):.0f}s")
+print(f"  Metrics: {train_result.metrics}")
 
 
 # ============================================================================

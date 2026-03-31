@@ -853,6 +853,77 @@ Built the complete AI Workflow Optimizer UI — both a compact widget for the An
 
 ---
 
+---
+
+## Phase 13: UI/UX Redesign — "The Digital Curator"
+
+**Status:** Completed
+**Date:** 2026-03-31
+**Design Source:** Google Stitch exports (22 screens, light + dark modes)
+
+### Design System
+
+The entire UI has been redesigned based on the "Intelligent Canvas" design philosophy from Google Stitch.
+
+#### Design Tokens Updated
+| Token Category | Old Value | New Value |
+|----------------|-----------|-----------|
+| Primary | `#00A6FF` (Bright Blue) | `#4F46E5` (Indigo-600) |
+| Secondary | `#7F57FF` (Purple) | `#7C3AED` (Violet-600) |
+| Background | `#FFFFFF` / `#0B0F3F` | `#F8F9FF` (surface) / `#0F172A` (slate-900) |
+| Sidebar | Dark Navy `#0B0F3F` | Slate-50 (light, tonal hierarchy) |
+| Success | `#2ECC71` | `#10B981` (Emerald) |
+| Warning | `#F1C40F` | `#F59E0B` (Amber) |
+| Destructive | `#E74C3C` | `#F43F5E` (Rose) |
+| Border style | 1px solid borders | Ghost borders (15% opacity) + tonal shifts |
+
+#### Files Updated
+| File | Changes |
+|------|---------|
+| `tailwind.config.ts` | New MD3 surface tokens, ambient shadows, new animations, font families |
+| `app/globals.css` | New HSL CSS variables for light/dark, glassmorphism utilities, ghost borders |
+| `app/layout.tsx` | Added Inter font weights, CommandPalette, suppressHydrationWarning |
+| `app/dashboard/layout.tsx` | Complete rewrite: slate-50 sidebar, glassmorphism topbar, theme toggle |
+
+### New Components Created
+| Component | Purpose |
+|-----------|---------|
+| `components/ui/command-palette.tsx` | Cmd+K search overlay with keyboard navigation |
+| `components/ui/theme-toggle.tsx` | Light/Dark/System theme toggle |
+| `components/ui/empty-state.tsx` | Reusable empty state with illustration area |
+| `components/ui/skeleton.tsx` | Skeleton loaders: Card, Table, Kanban, Dashboard |
+| `app/not-found.tsx` | 404 page with geometric illustration |
+| `app/error.tsx` | 500 error page with retry action |
+
+### Screens Redesigned
+| Screen | Key Changes |
+|--------|-------------|
+| **Login** | Split layout with testimonial panel, gradient CTA, editorial labels |
+| **Signup** | Split layout with feature list, password strength, violet gradient |
+| **Organization Selection** | Card grid with tonal hierarchy, ghost borders |
+| **Organization Dashboard** | Bento welcome banner, AI suggestion card, stat cards |
+| **All 33 component files** | Bulk color migration from old brand to new Indigo/Violet palette |
+
+### Color Migration (Bulk)
+All 33 component files updated:
+- `brand-blue` → `indigo-600` / `indigo-500`
+- `brand-purple` → `violet-600` / `violet-500`
+- `brand-cyan` → `cyan-400`
+- `text-navy-900` → `text-foreground`
+- `bg-[#F8F9FC]` → `bg-slate-50 dark:bg-slate-900`
+- `border-[#E7E9EF]` → `border-slate-200 dark:border-slate-800`
+
+### Design Principles Applied
+1. **No-Line Rule:** Borders replaced with tonal background shifts
+2. **Surface Hierarchy:** `surface-container-lowest` → `surface-container-highest` layering
+3. **Glassmorphism:** Topbar uses `backdrop-blur-md` with 80% opacity
+4. **Editorial Typography:** `text-[0.6875rem] font-bold uppercase tracking-wider` for labels
+5. **Gradient Signatures:** Primary-to-Secondary gradient on all main CTAs
+6. **Ambient Shadows:** `0px 20px 50px rgba(11, 28, 48, 0.06)` on hover/floating elements
+7. **AI Visual Identity:** Violet accents for all AI-related elements
+
+---
+
 ## Next Steps
 - [ ] Run the decomposition training notebook on Colab
 - [ ] Run the assigner training notebook (CPU, ~5 min)
