@@ -1,0 +1,44 @@
+# Environment
+.env
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Model weights — most are too large for git, but keep small trained models
+# for deployment (assigner + optimizer are ~10MB each, fine to ship)
+*.bin
+*.pt
+*.safetensors
+
+# Ignore heavy decomposition (FLAN-T5 is ~300MB, exceeds render free tier RAM)
+model_weights/decomposition/
+# Ignore training output folders
+model_weights/flan-t5-*/
+assigner-model/
+optimizer-model/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Images

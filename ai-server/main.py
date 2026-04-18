@@ -104,15 +104,23 @@ app = FastAPI(
 # Privacy: inspect every POST payload for forbidden PII fields
 app.add_middleware(PayloadInspectorMiddleware)
 
-# CORS — allow the Next.js app origin from env
-next_app_url = os.getenv("NEXT_APP_URL", "http://localhost:3000")
+# CORS — support multiple origins including Vercel preview URLs
+# NEXT_APP_URL can be a single URL or comma-separated list
+_next_app_urls = os.getenv("NEXT_APP_URL", "http://localhost:3000")
+_allowed_origins = [o.strip() for o in _next_app_urls.split(",") if o.strip()]
+
+# Also allow all *.vercel.app preview URLs in production via regex
+_vercel_preview_regex = r"^https://.*\.vercel\.app$"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[next_app_url],
+    allow_origins=_allowed_origins,
+    allow_origin_regex=_vercel_preview_regex,
     allow_credentials=True,
-    allow_methods=["POST", "GET"],
+    allow_methods=["POST", "GET", "OPTIONS"],
     allow_headers=["*"],
 )
+log.info("CORS configured — origins: %s + vercel.app previews", _allowed_origins)
 
 # ---------------------------------------------------------------------------
 # Routers
@@ -120,6 +128,17 @@ app.add_middleware(
 app.include_router(decomposition.router, tags=["Decomposition (M6)"])
 app.include_router(assigner.router, tags=["Assignment (M10)"])
 app.include_router(optimizer.router, tags=["Optimizer (M11)"])
+
+
+@app.get("/", tags=["Health"])
+async def root():
+    """Root endpoint — used by Render for uptime pings."""
+    return {
+        "service": "workflow360-ai-server",
+        "version": app.version,
+        "status": "ok",
+    }
+
 
 
 # ---------------------------------------------------------------------------
