@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: workflow360-ai-server
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: ai-server
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: AI_API_KEY
+        generateValue: true
+      - key: NEXT_APP_URL
+        sync: false
+      - key: MODEL_DIR
+        value: ./model_weights
+      - key: DEVICE
+        value: cpu

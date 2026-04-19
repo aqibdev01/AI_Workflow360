@@ -1,0 +1,37 @@
+{
+  "model_type": "GradientBoosting",
+  "model_version": "assigner-v1",
+  "calibrated": true,
+  "sbert_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "feature_names": [
+    "skill_match_score",
+    "semantic_similarity",
+    "workload_score",
+    "role_match_score",
+    "performance_score",
+    "availability_score"
+  ],
+  "feature_count": 6,
+  "training_examples": 5000,
+  "total_feature_rows": 27322,
+  "test_accuracy": 0.8801,
+  "test_f1": 0.6172,
+  "test_precision": 0.7426,
+  "test_recall": 0.528,
+  "feature_importances": {
+    "skill_match_score": 0.1787,
+    "semantic_similarity": 0.0455,
+    "workload_score": 0.1906,
+    "role_match_score": 0.4335,
+    "performance_score": 0.137,
+    "availability_score": 0.0147
+  },
+  "scoring_weights": {
+    "skill_match": 0.4,
+    "workload": 0.25,
+    "role_match": 0.2,
+    "performance": 0.15
+  },
+  "inference_time_ms": 3.22,
+  "model_size_mb": 1.01
+}

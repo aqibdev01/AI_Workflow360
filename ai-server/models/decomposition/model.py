@@ -48,6 +48,41 @@ def load_model() -> DecompositionModel:
     if _model is not None:
         return DecompositionModel()
 
+    # Option 1: Load from HuggingFace Hub if HF_DECOMPOSITION_MODEL is set.
+    # Set this on HF Spaces / Render to e.g. "yourusername/flan-t5-pm-decomposition"
+    # The model is downloaded once at startup (cached in ~/.cache/huggingface).
+    hf_model_id = os.getenv("HF_DECOMPOSITION_MODEL")
+    if hf_model_id:
+        try:
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+            import torch
+
+            device = os.getenv("DEVICE", "cpu")
+            log.info("Loading decomposition model from HuggingFace Hub: %s", hf_model_id)
+
+            _tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
+            _model = AutoModelForSeq2SeqLM.from_pretrained(hf_model_id)
+
+            if device == "cuda" and torch.cuda.is_available():
+                _model = _model.to("cuda")
+            else:
+                _model = _model.to("cpu")
+            _model.eval()
+            _mock_mode = False
+            _model_version = f"hf:{hf_model_id}"
+            param_count = sum(p.numel() for p in _model.parameters()) / 1e6
+            log.info(
+                "Decomposition model loaded from HF Hub: %s (%.1fM params) on %s",
+                _model_version, param_count, device,
+            )
+            return DecompositionModel()
+        except Exception as exc:
+            log.warning(
+                "Failed to load from HF Hub (%s: %s) — falling back to local",
+                hf_model_id, exc,
+            )
+
+    # Option 2: Load from local disk
     model_dir = os.getenv("MODEL_DIR", "./model_weights")
     model_path = os.path.join(model_dir, "decomposition")
 
