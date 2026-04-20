@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # HF Spaces runs as user id 1000 with read/write to /app
 RUN useradd -m -u 1000 user
 WORKDIR /app
+RUN chown -R user:user /app
 
 # Copy requirements first for layer caching
 COPY --chown=user:user requirements.txt .

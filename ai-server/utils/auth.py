@@ -14,7 +14,13 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 # Security logger — writes to a dedicated security.log file
 # ---------------------------------------------------------------------------
 _security_log = logging.getLogger("ai-server.security")
-_security_handler = logging.FileHandler("security.log", encoding="utf-8")
+_security_log_path = os.getenv("SECURITY_LOG_PATH", "security.log")
+try:
+    _security_handler: logging.Handler = logging.FileHandler(
+        _security_log_path, encoding="utf-8"
+    )
+except (PermissionError, OSError):
+    _security_handler = logging.StreamHandler()
 _security_handler.setFormatter(
     logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 )
