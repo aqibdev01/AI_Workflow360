@@ -24,6 +24,8 @@ model_weights/flan-t5-*/
 assigner-model/
 optimizer-model/
 
+model_weights/
+*.png
 # Logs
 *.log
 logs/

@@ -2,8 +2,9 @@ from pydantic import BaseModel, Field
 
 
 class MemberProfile(BaseModel):
+    model_config = {"extra": "ignore"}
+
     user_id: str
-    full_name: str
     role: str
     skills: list[str] = Field(default_factory=list)
     current_task_count: int = 0
@@ -23,7 +24,6 @@ class AssignRequest(BaseModel):
 
 class AssigneeSuggestion(BaseModel):
     user_id: str
-    full_name: str
     confidence: float = Field(0.0, ge=0.0, le=1.0)
     scoring_breakdown: dict = Field(default_factory=dict)
 

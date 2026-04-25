@@ -14,7 +14,13 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 # Security logger — writes to a dedicated security.log file
 # ---------------------------------------------------------------------------
 _security_log = logging.getLogger("ai-server.security")
-_security_handler = logging.FileHandler("security.log", encoding="utf-8")
+_security_log_path = os.getenv("SECURITY_LOG_PATH", "security.log")
+try:
+    _security_handler: logging.Handler = logging.FileHandler(
+        _security_log_path, encoding="utf-8"
+    )
+except (PermissionError, OSError):
+    _security_handler = logging.StreamHandler()
 _security_handler.setFormatter(
     logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 )
@@ -73,41 +79,78 @@ def inspect_payload(data: dict, path: str = "") -> list[str]:
     return violations
 
 
-class PayloadInspectorMiddleware(BaseHTTPMiddleware):
-    """Rejects POST requests containing forbidden PII fields.
-    Logs violations to security.log (field names only, never values).
+class PayloadInspectorMiddleware:
+    """Pure-ASGI middleware that rejects POST requests containing forbidden PII.
+
+    Implemented as ASGI (not BaseHTTPMiddleware) because BaseHTTPMiddleware
+    buffers response bodies and breaks StreamingResponse / truncates bodies
+    behind the HF Spaces proxy.
     """
 
-    async def dispatch(self, request: Request, call_next):
-        if request.method == "POST":
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http" or scope.get("method") != "POST":
+            await self.app(scope, receive, send)
+            return
+
+        # Drain the incoming body
+        chunks: list[bytes] = []
+        more_body = True
+        while more_body:
+            message = await receive()
+            if message["type"] != "http.request":
+                # Disconnect or unexpected message type — bail out
+                await self.app(scope, receive, send)
+                return
+            chunks.append(message.get("body", b"") or b"")
+            more_body = message.get("more_body", False)
+        body_bytes = b"".join(chunks)
+
+        # Inspect
+        if body_bytes:
             try:
-                body_bytes = await request.body()
-                if body_bytes:
-                    data = json.loads(body_bytes)
-                    if isinstance(data, dict):
-                        violations = inspect_payload(data)
-                        if violations:
-                            timestamp = datetime.now(timezone.utc).isoformat()
-                            client = request.client.host if request.client else "unknown"
-                            _security_log.warning(
-                                "PAYLOAD VIOLATION | ip=%s | path=%s | time=%s | fields=%s",
-                                client, request.url.path, timestamp,
-                                "; ".join(violations),
-                            )
-                            return JSONResponse(
-                                status_code=400,
-                                content={
-                                    "error": "payload_violation",
-                                    "detail": "Request contains forbidden data fields that violate the AI data privacy boundary.",
-                                    "fields": violations,
-                                },
-                            )
-
-                    async def receive():
-                        return {"type": "http.request", "body": body_bytes}
-                    request._receive = receive
-
+                data = json.loads(body_bytes)
+                if isinstance(data, dict):
+                    violations = inspect_payload(data)
+                    if violations:
+                        timestamp = datetime.now(timezone.utc).isoformat()
+                        client_host = "unknown"
+                        client_info = scope.get("client")
+                        if client_info:
+                            client_host = client_info[0] if len(client_info) else "unknown"
+                        path = scope.get("path", "")
+                        _security_log.warning(
+                            "PAYLOAD VIOLATION | ip=%s | path=%s | time=%s | fields=%s",
+                            client_host, path, timestamp, "; ".join(violations),
+                        )
+                        body = json.dumps({
+                            "error": "payload_violation",
+                            "detail": "Request contains forbidden data fields that violate the AI data privacy boundary.",
+                            "fields": violations,
+                        }).encode("utf-8")
+                        await send({
+                            "type": "http.response.start",
+                            "status": 400,
+                            "headers": [
+                                (b"content-type", b"application/json"),
+                                (b"content-length", str(len(body)).encode()),
+                            ],
+                        })
+                        await send({"type": "http.response.body", "body": body})
+                        return
             except (json.JSONDecodeError, UnicodeDecodeError):
                 pass
 
-        return await call_next(request)
+        # Replay the buffered body so the downstream app can read it
+        replayed = False
+
+        async def replay_receive():
+            nonlocal replayed
+            if not replayed:
+                replayed = True
+                return {"type": "http.request", "body": body_bytes, "more_body": False}
+            return await receive()
+
+        await self.app(scope, replay_receive, send)

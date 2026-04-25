@@ -182,7 +182,6 @@ def _real_suggest(am, task_id, title, description, tags, members) -> dict:
 
         candidates.append({
             "user_id": m["user_id"],
-            "full_name": m.get("full_name", m["user_id"]),
             "confidence": confidence,
             "scoring_breakdown": {
                 "skill_match": round(skill_match, 3),
@@ -252,7 +251,6 @@ def _mock_suggest(task_id: str, title: str, tags: list[str], members: list[dict]
 
         suggestions.append({
             "user_id": m["user_id"],
-            "full_name": m.get("full_name", f"User {m['user_id'][:8]}"),
             "confidence": confidence,
             "scoring_breakdown": {
                 "skill_match": skill_match,

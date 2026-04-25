@@ -1,3 +1,15 @@
+---
+title: Workflow360 AI Server
+emoji: 🤖
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+short_description: AI backend for Workflow360 — task decomposition, assignment, and bottleneck prediction
+---
+
 # Workflow360 AI Server
 
 FastAPI server hosting three AI modules for the Workflow360 project management platform.
