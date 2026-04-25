@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+import io
 
 from schemas.decomposition import DecomposeRequest, DecomposeResponse, SubtaskSuggestion
 from models.decomposition.inference import decompose
@@ -47,7 +49,6 @@ def _log_request(task_id: str, num_subtasks: int, confidence: float, model_versi
 
 @router.post(
     "/decompose",
-    response_model=DecomposeResponse,
     summary="Decompose a task into subtasks",
     description=(
         "Takes a task's title, description, and priority, then uses the "
@@ -58,7 +59,7 @@ def _log_request(task_id: str, num_subtasks: int, confidence: float, model_versi
 async def decompose_task(
     req: DecomposeRequest,
     _key: str = Depends(verify_api_key),
-) -> DecomposeResponse:
+):
     # Warn if description is missing but proceed
     if not req.description:
         log.warning(
@@ -96,7 +97,13 @@ async def decompose_task(
     # Store in memory history
     _history[req.task_id].append(result)
 
-    return response
+    # Return as StreamingResponse (chunked) — HF Space's proxy mishandles
+    # fixed-Content-Length responses and truncates the body mid-TLS.
+    payload = response.model_dump_json().encode("utf-8")
+    return StreamingResponse(
+        io.BytesIO(payload),
+        media_type="application/json",
+    )
 
 
 @router.get(

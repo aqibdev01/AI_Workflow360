@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+import io
 
 from schemas.assigner import AssignRequest, AssignResponse, AssigneeSuggestion
 from models.assigner.inference import suggest
@@ -42,7 +44,6 @@ def _log_request(task_id: str, num_suggestions: int, top_confidence: float, mode
 
 @router.post(
     "/suggest-assignee",
-    response_model=AssignResponse,
     summary="Suggest the best assignee for a task",
     description=(
         "Scores all project members using SBERT embeddings + trained classifier. "
@@ -52,7 +53,7 @@ def _log_request(task_id: str, num_suggestions: int, top_confidence: float, mode
 async def suggest_assignee(
     req: AssignRequest,
     _key: str = Depends(verify_api_key),
-) -> AssignResponse:
+):
     log.info(
         "Assignment request for task %s (%d candidates)",
         req.task_id,
@@ -86,4 +87,5 @@ async def suggest_assignee(
         model_version=response.model_version,
     )
 
-    return response
+    payload = response.model_dump_json().encode("utf-8")
+    return StreamingResponse(io.BytesIO(payload), media_type="application/json")

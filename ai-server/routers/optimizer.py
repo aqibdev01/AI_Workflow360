@@ -11,6 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+import io
 from pydantic import BaseModel, Field
 
 from schemas.optimizer import (
@@ -50,7 +52,6 @@ def _log_request(sprint_id: str, risk_level: str, risk_score: float, bottleneck_
 
 @router.post(
     "/analyze-sprint",
-    response_model=SprintAnalysisResponse,
     summary="Analyze a sprint for bottleneck risks",
     description=(
         "Uses XGBoost classifier + rule-based detection to identify sprint risks. "
@@ -60,7 +61,7 @@ def _log_request(sprint_id: str, risk_level: str, risk_score: float, bottleneck_
 async def analyze_sprint(
     req: SprintAnalysisRequest,
     _key: str = Depends(verify_api_key),
-) -> SprintAnalysisResponse:
+):
     log.info(
         "Sprint analysis for %s (%d tasks)",
         req.sprint_id,
@@ -97,7 +98,8 @@ async def analyze_sprint(
         model_version=response.model_version,
     )
 
-    return response
+    payload = response.model_dump_json().encode("utf-8")
+    return StreamingResponse(io.BytesIO(payload), media_type="application/json")
 
 
 # ---- Batch: analyze all sprints for a project ----
