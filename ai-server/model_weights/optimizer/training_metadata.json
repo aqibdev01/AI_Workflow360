@@ -1,11 +1,5 @@
 {
-  "model_type": "XGBClassifier",
   "model_version": "optimizer-v1",
-  "best_params": {
-    "learning_rate": 0.2,
-    "max_depth": 5,
-    "n_estimators": 300
-  },
   "feature_names": [
     "days_remaining",
     "completion_rate",
@@ -26,112 +20,18 @@
     "velocity_vs_plan",
     "scope_change_ratio"
   ],
-  "feature_count": 18,
-  "risk_levels": [
-    "low",
-    "medium",
+  "class_names": [
+    "critical",
     "high",
-    "critical"
+    "low",
+    "medium"
   ],
-  "training_examples": 8000,
-  "test_accuracy": 0.94,
-  "test_f1_macro": 0.9403,
-  "cv_f1_macro": 0.9479,
-  "top_features_shap": [
-    {
-      "name": "completion_rate",
-      "importance": 1.0849
-    },
-    {
-      "name": "days_remaining",
-      "importance": 0.9129
-    },
-    {
-      "name": "velocity_vs_plan",
-      "importance": 0.7189
-    },
-    {
-      "name": "blocked_task_count",
-      "importance": 0.5444
-    },
-    {
-      "name": "overloaded_member_count",
-      "importance": 0.4534
-    },
-    {
-      "name": "workload_std_dev",
-      "importance": 0.4127
-    },
-    {
-      "name": "unassigned_task_count",
-      "importance": 0.3413
-    },
-    {
-      "name": "story_points_remaining",
-      "importance": 0.3087
-    },
-    {
-      "name": "capacity_utilization",
-      "importance": 0.2802
-    },
-    {
-      "name": "story_points_completed",
-      "importance": 0.2291
-    }
-  ],
-  "top_features_xgboost": [
-    {
-      "name": "velocity_vs_plan",
-      "importance": 0.2777
-    },
-    {
-      "name": "completion_rate",
-      "importance": 0.2266
-    },
-    {
-      "name": "overloaded_member_count",
-      "importance": 0.1048
-    },
-    {
-      "name": "days_remaining",
-      "importance": 0.0833
-    },
-    {
-      "name": "blocked_task_count",
-      "importance": 0.0693
-    },
-    {
-      "name": "unassigned_task_count",
-      "importance": 0.0471
-    },
-    {
-      "name": "workload_std_dev",
-      "importance": 0.0331
-    },
-    {
-      "name": "capacity_utilization",
-      "importance": 0.0288
-    },
-    {
-      "name": "critical_task_count",
-      "importance": 0.0251
-    },
-    {
-      "name": "overdue_task_count",
-      "importance": 0.0201
-    }
-  ],
-  "bottleneck_types": [
-    "member_overload",
-    "blocked_tasks",
-    "unassigned_critical",
-    "velocity_lag",
-    "deadline_risk",
-    "scope_creep",
-    "workload_imbalance",
-    "overdue_tasks"
-  ],
-  "inference_time_ms": 0.826,
-  "shap_time_ms": 7.2,
-  "model_size_mb": 2.19
+  "best_params": {
+    "learning_rate": 0.2,
+    "max_depth": 4,
+    "n_estimators": 200
+  },
+  "test_accuracy": 0.9481,
+  "test_f1_macro": 0.9485,
+  "sklearn_version": "1.5.0"
 }
